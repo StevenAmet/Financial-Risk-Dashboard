@@ -1,7 +1,0 @@
-streamlit>=1.30
-pandas
-numpy
-matplotlib
-seaborn
-scikit-learn
-reportlab
