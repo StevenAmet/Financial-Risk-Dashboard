@@ -25,21 +25,24 @@ html, body, [class*="css"]  {
     font-size: 13px;
 }
 
-/* FIXED METRIC VISIBILITY */
+/* METRIC CONTAINER */
 [data-testid="stMetric"] {
-    background-color: #F5F7FA;
+    background-color: #F5F7FA !important;
     padding: 10px;
     border-radius: 8px;
     border: 1px solid #D0D7DE;
-    color: black !important;
 }
 
-[data-testid="stMetricLabel"] {
-    color: black !important;
+/* FORCE ALL TEXT INSIDE METRIC */
+[data-testid="stMetric"] * {
+    color: #000000 !important;
 }
 
-[data-testid="stMetricValue"] {
-    color: black !important;
+/* DARK MODE SAFE BACKGROUND */
+@media (prefers-color-scheme: dark) {
+    [data-testid="stMetric"] {
+        background-color: #FFFFFF !important;
+    }
 }
 
 .block-container {
