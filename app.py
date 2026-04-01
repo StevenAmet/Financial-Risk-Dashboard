@@ -315,20 +315,22 @@ plt.tight_layout()
 st.pyplot(fig_ml)
 
 # -------------------------------
-# SUMMARY
+# EXECUTIVE SUMMARY
 # -------------------------------
 st.markdown("### 🧠 Executive Summary")
 
 st.write(f"""
-VaR: €{abs(VaR_99)/1e6:.2f}M  
-LCR: {lcr:.2f}  
-CET1: {cet1:.2%}  
+This portfolio shows a Value-at-Risk of €{abs(VaR_99)/1e6:.2f}M, indicating potential downside exposure under extreme conditions.
 
-👉 Risk driven by market shocks and correlations.
+Liquidity coverage stands at {lcr:.2f}, suggesting the portfolio is {'strong' if lcr > 1.5 else 'adequate' if lcr > 1 else 'at risk'}.
+
+Capital adequacy (CET1) is {cet1:.2%}, reflecting {'strong capitalization' if cet1 > 0.15 else 'moderate capital levels'}.
+
+👉 Overall, risk is driven by market shocks and asset correlations.
 """)
 
 # -------------------------------
-# PDF
+# PDF EXPORT
 # -------------------------------
 def generate_pdf():
     buffer = BytesIO()
