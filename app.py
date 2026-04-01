@@ -46,6 +46,18 @@ st.caption("Market | Credit | Liquidity | Capital | Quant Models")
 # -------------------------------
 # CSV UPLOAD
 # -------------------------------
+st.markdown("### 📁 Upload Portfolio")
+
+st.info("""
+Upload a CSV with the following columns:
+
+- asset_type → loan, bond, equity, cash  
+- value → numeric (€)  
+- PD → probability of default (loans only)  
+- LGD → loss given default (loans only)  
+- duration → bond sensitivity to rates  
+""")
+
 uploaded_file = st.file_uploader("Upload Portfolio CSV", type=["csv"])
 
 # -------------------------------
@@ -86,6 +98,13 @@ else:
         "LGD": [0.4, 0.5, 0, 0, 0, 0, 0],
         "duration": [0, 0, 5, 7, 0, 0, 0]
     })
+
+# -------------------------------
+# PORTFOLIO OVERVIEW
+# -------------------------------
+st.markdown("### 📊 Portfolio Overview")
+summary = portfolio.groupby("asset_type")["value"].sum()
+st.dataframe(summary)
 
 # -------------------------------
 # CORE FUNCTIONS
@@ -136,7 +155,6 @@ def basel_capital(df):
     rwa = (df["rw"] * df["value"]).sum()
     return rwa, 1_000_000 / rwa
 
-# ✅ REALISTIC RETURNS (FIXED)
 def generate_returns(n=300):
     return pd.DataFrame({
         "loan": np.random.normal(0.06, 0.08, n),
@@ -149,6 +167,17 @@ def generate_returns(n=300):
 # RUN MODEL
 # -------------------------------
 stress = run_stress(portfolio)
+returns = generate_returns()
+
+mean_returns = returns.mean()
+cov = returns.cov()
+scores = mean_returns / np.diag(cov)
+weights = scores / scores.sum()
+
+X = returns
+y = returns.sum(axis=1)
+model = LinearRegression().fit(X, y)
+pred = model.predict(X)
 
 VaR_95 = np.percentile(stress, 5)
 VaR_99 = np.percentile(stress, 1)
@@ -165,30 +194,50 @@ st.markdown("### 📌 Key Risk Metrics")
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("VaR 99%", f"€{VaR_99/1e6:.2f}M")
 c2.metric("Expected Shortfall", f"€{ES/1e6:.2f}M")
-c3.metric("LCR", f"{lcr:.2f}")
+c3.metric("LCR", f"{lcr:.2f}x")
 c4.metric("CET1", f"{cet1:.2%}")
+
+# LCR STATUS
+if lcr < 1:
+    st.error("🔴 Liquidity risk: insufficient buffer.")
+elif lcr < 1.5:
+    st.warning("🟠 Liquidity is acceptable but could improve.")
+else:
+    st.success("🟢 Strong liquidity position.")
+
+# -------------------------------
+# RISK SCORE
+# -------------------------------
+risk_score = abs(VaR_99) / portfolio["value"].sum()
+
+if risk_score > 0.3:
+    st.error("🔴 High Risk Portfolio")
+elif risk_score > 0.15:
+    st.warning("🟠 Medium Risk Portfolio")
+else:
+    st.success("🟢 Low Risk Portfolio")
 
 # -------------------------------
 # LOSS DISTRIBUTION
 # -------------------------------
 st.markdown("### 📉 Loss Distribution")
 
-fig, ax = plt.subplots(figsize=(6,3))
+fig, ax = plt.subplots(figsize=(5, 2.5))
 ax.hist(stress, bins=40)
 ax.axvline(VaR_95, linestyle="--")
 ax.axvline(VaR_99, linestyle="--")
 ax.xaxis.set_major_formatter(mtick.FuncFormatter(lambda x, _: f'€{x/1e6:.1f}M'))
+plt.tight_layout()
 st.pyplot(fig)
 
 # -------------------------------
 # CORRELATION
 # -------------------------------
-returns = generate_returns()
-
 st.markdown("### 🔗 Correlation Matrix")
 
-fig_corr, ax = plt.subplots(figsize=(5,3))
+fig_corr, ax = plt.subplots(figsize=(4.5, 2.5))
 sns.heatmap(returns.corr(), annot=True, cmap="coolwarm", ax=ax)
+plt.tight_layout()
 st.pyplot(fig_corr)
 
 # -------------------------------
@@ -198,44 +247,52 @@ st.markdown("### 📊 PCA Risk Drivers")
 
 pca = PCA().fit(returns)
 
-fig_pca, ax = plt.subplots(figsize=(5,3))
+fig_pca, ax = plt.subplots(figsize=(4.5, 2.5))
 ax.bar(range(len(pca.explained_variance_ratio_)), pca.explained_variance_ratio_)
 ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
+plt.tight_layout()
 st.pyplot(fig_pca)
 
 # -------------------------------
-# OPTIMIZATION (FIXED)
+# OPTIMIZATION
 # -------------------------------
 st.markdown("### ⚙️ Portfolio Optimization")
 
-mean_returns = returns.mean()
-cov = returns.cov()
+ret = np.dot(weights, mean_returns)
+risk = np.sqrt(weights.T @ cov @ weights)
 
-scores = mean_returns / np.diag(cov)
-weights = scores / scores.sum()
-
-st.write(f"Return: {np.dot(weights, mean_returns):.2%}")
-st.write(f"Risk: {np.sqrt(weights.T @ cov @ weights):.2%}")
+st.write(f"Return: {ret:.2%}")
+st.write(f"Risk: {risk:.2%}")
 
 # -------------------------------
 # ML
 # -------------------------------
 st.markdown("### 🤖 ML Risk Prediction")
 
-X = returns
-y = returns.sum(axis=1)
-
-model = LinearRegression().fit(X, y)
-pred = model.predict(X)
-
-fig_ml, ax = plt.subplots(figsize=(5,3))
+fig_ml, ax = plt.subplots(figsize=(4.5, 2.5))
 ax.scatter(y, pred)
 ax.xaxis.set_major_formatter(mtick.PercentFormatter(1))
 ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
-st.pyplot(fig_ml)
+plt.tight_layout()
+st.pyplot(fig)
 
 # -------------------------------
-# PDF EXPORT (FIXED)
+# EXECUTIVE SUMMARY
+# -------------------------------
+st.markdown("### 🧠 Executive Summary")
+
+st.write(f"""
+This portfolio shows a Value-at-Risk of €{abs(VaR_99)/1e6:.2f}M, indicating potential downside exposure under extreme conditions.
+
+Liquidity coverage stands at {lcr:.2f}, suggesting the portfolio is {'strong' if lcr > 1.5 else 'adequate' if lcr > 1 else 'at risk'}.
+
+Capital adequacy (CET1) is {cet1:.2%}, reflecting {'strong capitalization' if cet1 > 0.15 else 'moderate capital levels'}.
+
+👉 Overall, risk is driven by market shocks and asset correlations.
+""")
+
+# -------------------------------
+# PDF EXPORT
 # -------------------------------
 def generate_pdf():
     buffer = BytesIO()
