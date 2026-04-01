@@ -43,6 +43,9 @@ html, body, [class*="css"]  {
 st.title("🏦 Financial Risk Dashboard")
 st.caption("Market | Credit | Liquidity | Capital | Quant Models")
 
+# ✅ ADDED AUTHOR
+st.markdown("**Created by Steven Amet**")
+
 # -------------------------------
 # CSV UPLOAD
 # -------------------------------
@@ -191,38 +194,33 @@ rwa, cet1 = basel_capital(portfolio)
 # -------------------------------
 st.markdown("### 📌 Key Risk Metrics")
 
+st.info("""
+**How to interpret:**
+- **VaR 99%** → worst loss expected in extreme conditions (1% scenarios)
+- **Expected Shortfall** → average loss beyond VaR (tail risk)
+- **LCR** → liquidity strength (must be >1 to survive stress)
+- **CET1** → capital buffer vs risk-weighted assets
+""")
+
 c1, c2, c3, c4 = st.columns(4)
 c1.metric("VaR 99%", f"€{VaR_99/1e6:.2f}M")
 c2.metric("Expected Shortfall", f"€{ES/1e6:.2f}M")
 c3.metric("LCR", f"{lcr:.2f}x")
 c4.metric("CET1", f"{cet1:.2%}")
 
-# LCR STATUS
-if lcr < 1:
-    st.error("🔴 Liquidity risk: insufficient buffer.")
-elif lcr < 1.5:
-    st.warning("🟠 Liquidity is acceptable but could improve.")
-else:
-    st.success("🟢 Strong liquidity position.")
-
-# -------------------------------
-# RISK SCORE
-# -------------------------------
-risk_score = abs(VaR_99) / portfolio["value"].sum()
-
-if risk_score > 0.3:
-    st.error("🔴 High Risk Portfolio")
-elif risk_score > 0.15:
-    st.warning("🟠 Medium Risk Portfolio")
-else:
-    st.success("🟢 Low Risk Portfolio")
-
 # -------------------------------
 # LOSS DISTRIBUTION
 # -------------------------------
 st.markdown("### 📉 Loss Distribution")
 
-fig, ax = plt.subplots(figsize=(5, 2.5))
+st.info("""
+This shows all simulated outcomes:
+- Left tail = worst losses
+- Vertical lines = VaR thresholds
+- Wider spread = higher volatility and uncertainty
+""")
+
+fig, ax = plt.subplots(figsize=(4.5, 2.5))
 ax.hist(stress, bins=40)
 ax.axvline(VaR_95, linestyle="--")
 ax.axvline(VaR_99, linestyle="--")
@@ -235,6 +233,12 @@ st.pyplot(fig)
 # -------------------------------
 st.markdown("### 🔗 Correlation Matrix")
 
+st.info("""
+- +1 = assets move together (high systemic risk)
+- 0 = independent
+- Negative = diversification benefit
+""")
+
 fig_corr, ax = plt.subplots(figsize=(4.5, 2.5))
 sns.heatmap(returns.corr(), annot=True, cmap="coolwarm", ax=ax)
 plt.tight_layout()
@@ -244,6 +248,18 @@ st.pyplot(fig_corr)
 # PCA
 # -------------------------------
 st.markdown("### 📊 PCA Risk Drivers")
+
+st.info("""
+PCA identifies main sources of risk:
+
+- First bar = dominant risk factor
+- If first bar is very high → portfolio driven by ONE systemic factor
+- If spread out → diversified risk drivers
+
+👉 Interpretation:
+- Concentrated PCA = fragile portfolio
+- Balanced PCA = resilient portfolio
+""")
 
 pca = PCA().fit(returns)
 
@@ -258,6 +274,12 @@ st.pyplot(fig_pca)
 # -------------------------------
 st.markdown("### ⚙️ Portfolio Optimization")
 
+st.info("""
+Optimized weights balance return vs risk:
+- Higher return = more aggressive allocation
+- Lower risk = more stable portfolio
+""")
+
 ret = np.dot(weights, mean_returns)
 risk = np.sqrt(weights.T @ cov @ weights)
 
@@ -269,12 +291,18 @@ st.write(f"Risk: {risk:.2%}")
 # -------------------------------
 st.markdown("### 🤖 ML Risk Prediction")
 
+st.info("""
+- Compares predicted vs actual returns
+- Points close to diagonal = accurate model
+- Wide scatter = weak predictive power
+""")
+
 fig_ml, ax = plt.subplots(figsize=(4.5, 2.5))
 ax.scatter(y, pred)
 ax.xaxis.set_major_formatter(mtick.PercentFormatter(1))
 ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
 plt.tight_layout()
-st.pyplot(fig)
+st.pyplot(fig_ml)
 
 # -------------------------------
 # EXECUTIVE SUMMARY
@@ -300,7 +328,7 @@ def generate_pdf():
     styles = getSampleStyleSheet()
 
     content = []
-    content.append(Paragraph("Risk Report", styles["Title"]))
+    content.append(Paragraph("Risk Report - Steven Amet", styles["Title"]))
     content.append(Paragraph(f"VaR: €{VaR_99/1e6:.2f}M", styles["Normal"]))
 
     doc.build(content)
