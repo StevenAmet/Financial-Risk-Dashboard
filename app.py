@@ -24,12 +24,24 @@ st.markdown("""
 html, body, [class*="css"]  {
     font-size: 13px;
 }
-.stMetric {
+
+/* FIXED METRIC VISIBILITY */
+[data-testid="stMetric"] {
     background-color: #F5F7FA;
     padding: 10px;
     border-radius: 8px;
     border: 1px solid #D0D7DE;
+    color: black !important;
 }
+
+[data-testid="stMetricLabel"] {
+    color: black !important;
+}
+
+[data-testid="stMetricValue"] {
+    color: black !important;
+}
+
 .block-container {
     padding-top: 1rem;
     padding-bottom: 1rem;
