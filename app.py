@@ -24,30 +24,19 @@ st.markdown("""
 html, body, [class*="css"]  {
     font-size: 13px;
 }
-
-/* METRIC CONTAINER */
 [data-testid="stMetric"] {
     background-color: #F5F7FA !important;
     padding: 10px;
     border-radius: 8px;
     border: 1px solid #D0D7DE;
 }
-
-/* FORCE ALL TEXT INSIDE METRIC */
 [data-testid="stMetric"] * {
     color: #000000 !important;
 }
-
-/* DARK MODE SAFE BACKGROUND */
 @media (prefers-color-scheme: dark) {
     [data-testid="stMetric"] {
         background-color: #FFFFFF !important;
     }
-}
-
-.block-container {
-    padding-top: 1rem;
-    padding-bottom: 1rem;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -57,23 +46,18 @@ html, body, [class*="css"]  {
 # -------------------------------
 st.title("🏦 Financial Risk Dashboard")
 st.caption("Market | Credit | Liquidity | Capital | Quant Models")
-
-# ✅ ADDED AUTHOR
 st.markdown("**Created by Steven Amet**")
 
 # -------------------------------
 # CSV UPLOAD
 # -------------------------------
 st.markdown("### 📁 Upload Portfolio")
-
 st.info("""
-Upload a CSV with the following columns:
-
-- asset_type → loan, bond, equity, cash  
-- value → numeric (€)  
-- PD → probability of default (loans only)  
-- LGD → loss given default (loans only)  
-- duration → bond sensitivity to rates  
+Upload a CSV with:
+- asset_type (loan, bond, equity, cash)
+- value (€)
+- PD, LGD (loans)
+- duration (bonds)
 """)
 
 uploaded_file = st.file_uploader("Upload Portfolio CSV", type=["csv"])
@@ -88,11 +72,24 @@ scenario = st.sidebar.selectbox(
     ["Custom", "2008 Crisis", "COVID Shock"]
 )
 
+# ✅ Scenario descriptions
 if scenario == "2008 Crisis":
+    st.sidebar.markdown("""
+    **2008 Crisis Scenario**
+    - Equity markets crash ~50%
+    - Credit defaults spike
+    - Liquidity dries up
+    """)
     equity_shock, rate_shock, credit_multiplier = -0.5, 0.03, 3
     deposit_run, liquidity_stress = 0.3, 0.2
 
 elif scenario == "COVID Shock":
+    st.sidebar.markdown("""
+    **COVID Shock Scenario**
+    - Rapid equity selloff
+    - Moderate credit stress
+    - Short-term liquidity pressure
+    """)
     equity_shock, rate_shock, credit_multiplier = -0.3, 0.01, 2
     deposit_run, liquidity_stress = 0.2, 0.1
 
@@ -152,7 +149,6 @@ def run_stress(df, n=500):
 def liquidity_model(df):
     cash = df[df["asset_type"] == "cash"]["value"].sum()
     bonds = df[df["asset_type"] == "bond"]["value"].sum()
-
     hqla = cash + bonds * (0.9 - liquidity_stress)
 
     loans = df[df["asset_type"] == "loan"]["value"].sum()
@@ -209,113 +205,85 @@ rwa, cet1 = basel_capital(portfolio)
 # -------------------------------
 st.markdown("### 📌 Key Risk Metrics")
 
-st.info("""
-**How to interpret:**
-- **VaR 99%** → worst loss expected in extreme conditions (1% scenarios)
-- **Expected Shortfall** → average loss beyond VaR (tail risk)
-- **LCR** → liquidity strength (must be >1 to survive stress)
-- **CET1** → capital buffer vs risk-weighted assets
-""")
-
-c1, c2, c3, c4 = st.columns(4)
+c1, c2, c3, c4, c5 = st.columns(5)
 c1.metric("VaR 99%", f"€{VaR_99/1e6:.2f}M")
 c2.metric("Expected Shortfall", f"€{ES/1e6:.2f}M")
 c3.metric("LCR", f"{lcr:.2f}x")
 c4.metric("CET1", f"{cet1:.2%}")
 
+ret = np.dot(weights, mean_returns)
+risk = np.sqrt(weights.T @ cov @ weights)
+sharpe = ret / risk
+c5.metric("Sharpe", f"{sharpe:.2f}")
+
+# ✅ SO WHAT LOGIC
+if VaR_99 < -2_000_000:
+    st.error("⚠️ Extreme losses exceed €2M — consider reducing risk exposure")
+
+if returns.corr().max().max() > 0.8:
+    st.warning("⚠️ High correlation detected — poor diversification")
+
 # -------------------------------
-# LOSS DISTRIBUTION
+# LOSS DISTRIBUTION (IMPROVED)
 # -------------------------------
 st.markdown("### 📉 Loss Distribution")
 
-st.info("""
-This shows all simulated outcomes:
-- Left tail = worst losses
-- Vertical lines = VaR thresholds
-- Wider spread = higher volatility and uncertainty
-""")
-
-fig, ax = plt.subplots(figsize=(4.5, 2.5))
-ax.hist(stress, bins=40)
-ax.axvline(VaR_95, linestyle="--")
-ax.axvline(VaR_99, linestyle="--")
+fig, ax = plt.subplots(figsize=(5, 2.5))
+sns.histplot(stress, bins=40, kde=True, ax=ax, color="#4C72B0")
+ax.axvline(VaR_95, linestyle="--", color="orange", label="VaR 95")
+ax.axvline(VaR_99, linestyle="--", color="red", label="VaR 99")
+ax.legend()
 ax.xaxis.set_major_formatter(mtick.FuncFormatter(lambda x, _: f'€{x/1e6:.1f}M'))
 plt.tight_layout()
 st.pyplot(fig)
 
 # -------------------------------
-# CORRELATION
+# CORRELATION (IMPROVED)
 # -------------------------------
 st.markdown("### 🔗 Correlation Matrix")
 
-st.info("""
-- +1 = assets move together (high systemic risk)
-- 0 = independent
-- Negative = diversification benefit
-""")
-
 fig_corr, ax = plt.subplots(figsize=(4.5, 2.5))
-sns.heatmap(returns.corr(), annot=True, cmap="coolwarm", ax=ax)
+sns.heatmap(returns.corr(), annot=True, cmap="RdYlGn", center=0, ax=ax)
 plt.tight_layout()
 st.pyplot(fig_corr)
 
 # -------------------------------
-# PCA
+# PCA (WITH LOADINGS)
 # -------------------------------
 st.markdown("### 📊 PCA Risk Drivers")
-
-st.info("""
-PCA identifies main sources of risk:
-
-- First bar = dominant risk factor
-- If first bar is very high → portfolio driven by ONE systemic factor
-- If spread out → diversified risk drivers
-
-👉 Interpretation:
-- Concentrated PCA = fragile portfolio
-- Balanced PCA = resilient portfolio
-""")
 
 pca = PCA().fit(returns)
 
 fig_pca, ax = plt.subplots(figsize=(4.5, 2.5))
-ax.bar(range(len(pca.explained_variance_ratio_)), pca.explained_variance_ratio_)
+ax.bar(range(len(pca.explained_variance_ratio_)), pca.explained_variance_ratio_, color="#55A868")
 ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
 plt.tight_layout()
 st.pyplot(fig_pca)
+
+# ✅ PCA LOADINGS
+loadings = pd.DataFrame(
+    pca.components_,
+    columns=returns.columns,
+    index=[f"PC{i+1}" for i in range(len(returns.columns))]
+)
+st.dataframe(loadings)
 
 # -------------------------------
 # OPTIMIZATION
 # -------------------------------
 st.markdown("### ⚙️ Portfolio Optimization")
-
-st.info("""
-Optimized weights balance return vs risk:
-- Higher return = more aggressive allocation
-- Lower risk = more stable portfolio
-""")
-
-ret = np.dot(weights, mean_returns)
-risk = np.sqrt(weights.T @ cov @ weights)
-
 st.write(f"Return: {ret:.2%}")
 st.write(f"Risk: {risk:.2%}")
 
 # -------------------------------
-# ML
+# ML (IMPROVED)
 # -------------------------------
 st.markdown("### 🤖 ML Risk Prediction")
 
-st.info("""
-- Compares predicted vs actual returns
-- Points close to diagonal = accurate model
-- Wide scatter = weak predictive power
-""")
-
 fig_ml, ax = plt.subplots(figsize=(4.5, 2.5))
-ax.scatter(y, pred)
-ax.xaxis.set_major_formatter(mtick.PercentFormatter(1))
-ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
+ax.scatter(y, pred, alpha=0.6)
+ax.plot([y.min(), y.max()], [y.min(), y.max()], linestyle="--", color="red")
+ax.set_title("Predicted vs Actual")
 plt.tight_layout()
 st.pyplot(fig_ml)
 
@@ -325,13 +293,13 @@ st.pyplot(fig_ml)
 st.markdown("### 🧠 Executive Summary")
 
 st.write(f"""
-This portfolio shows a Value-at-Risk of €{abs(VaR_99)/1e6:.2f}M, indicating potential downside exposure under extreme conditions.
+This portfolio shows a Value-at-Risk of €{abs(VaR_99)/1e6:.2f}M.
 
-Liquidity coverage stands at {lcr:.2f}, suggesting the portfolio is {'strong' if lcr > 1.5 else 'adequate' if lcr > 1 else 'at risk'}.
+Liquidity coverage: {lcr:.2f} → {'Strong' if lcr > 1.5 else 'Adequate' if lcr > 1 else 'At Risk'}.
 
-Capital adequacy (CET1) is {cet1:.2%}, reflecting {'strong capitalization' if cet1 > 0.15 else 'moderate capital levels'}.
+CET1 ratio: {cet1:.2%}.
 
-👉 Overall, risk is driven by market shocks and asset correlations.
+👉 Key insight: risk is driven by market shocks and correlations.
 """)
 
 # -------------------------------
