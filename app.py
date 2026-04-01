@@ -234,7 +234,31 @@ if returns.corr().max().max() > 0.8:
 # -------------------------------
 # CORRELATION (UNCHANGED)
 # -------------------------------
+
 st.markdown("### 🔗 Correlation Matrix")
+
+st.info("""
+This matrix shows how different asset classes move relative to each other.
+
+How to interpret:
+
+- **+1 correlation** → assets move together  
+    → increases systemic risk (everything falls at once)
+
+- **0 correlation** → no relationship  
+    → assets behave independently
+
+- **Negative correlation** → assets move in opposite directions  
+    → provides diversification benefits
+
+Why this matters:
+
+- High correlation across assets = **concentrated risk**
+- Low or negative correlation = **diversified portfolio**
+
+👉 Key takeaway:
+Even if assets look different, if they move together, your portfolio may still be risky.
+""")
 
 fig_corr, ax = plt.subplots(figsize=(4.5, 2.5))
 sns.heatmap(returns.corr(), annot=True, cmap="coolwarm", ax=ax)
@@ -244,12 +268,44 @@ st.pyplot(fig_corr)
 # -------------------------------
 # PCA + LOADINGS
 # -------------------------------
+# -------------------------------
+# PCA
+# -------------------------------
 st.markdown("### 📊 PCA Risk Drivers")
 
 st.info("""
-- First bar = dominant risk driver  
-- High concentration = systemic risk  
-- Spread out = diversification  
+Principal Component Analysis (PCA) identifies the main underlying drivers of risk in the portfolio.
+
+How to read the chart:
+
+- Each bar represents a "risk factor" (principal component)
+- The height shows how much of total portfolio risk it explains
+
+Key insights:
+
+- **First bar (PC1)**:
+    → the most important risk driver  
+    → often represents broad market/systemic risk
+
+- If PC1 is very large:
+    → portfolio is heavily exposed to ONE dominant factor  
+    → high systemic vulnerability  
+
+- If multiple bars are similar:
+    → risk is spread across multiple sources  
+    → better diversification  
+
+👉 PCA Loadings Table:
+- Shows which assets contribute most to each risk factor  
+- Example:
+    - If equities + loans dominate PC1 → market/credit driven risk  
+
+👉 Simple interpretation:
+- Concentrated PCA = fragile portfolio  
+- Balanced PCA = resilient portfolio  
+
+This answers:
+*"What is REALLY driving my risk under the surface?"*
 """)
 
 pca = PCA().fit(returns)
@@ -270,11 +326,34 @@ st.dataframe(loadings)
 # -------------------------------
 # LOSS DISTRIBUTION
 # -------------------------------
+
 st.markdown("### 📉 Loss Distribution")
 
 st.info("""
-- Left tail = extreme losses  
-- Vertical lines = VaR thresholds  
+This chart shows all simulated profit and loss outcomes from the Monte Carlo stress test.
+
+How to read this:
+
+- Each bar represents how often a specific profit/loss outcome occurs  
+- The left side (negative values) represents losses  
+- The further left you go → the more severe the loss  
+
+Key insights:
+
+- **Left tail** = extreme worst-case losses (rare but critical scenarios)  
+- **VaR lines** = thresholds for expected worst losses  
+    - VaR 95% → losses exceeded only 5% of the time  
+    - VaR 99% → losses exceeded only 1% of the time  
+
+- **Expected Shortfall (ES)** goes beyond VaR:
+    → it shows the *average loss when things are really bad*
+
+- **Width of distribution**:
+    - Wide = high volatility (uncertain portfolio)
+    - Narrow = more stable outcomes
+
+👉 In simple terms:
+This answers: *"How bad can things get — and how often?"*
 """)
 
 fig, ax = plt.subplots(figsize=(5, 2.5))
@@ -291,8 +370,28 @@ st.pyplot(fig)
 st.markdown("### ⚙️ Portfolio Optimization")
 
 st.info("""
-- Higher return = more aggressive  
-- Lower risk = more stable  
+This section shows the optimal allocation of assets to balance return and risk.
+
+How it works:
+
+- The model evaluates expected returns vs volatility (risk)
+- It assigns weights to maximize efficiency
+
+Key metrics:
+
+- **Return** → expected portfolio performance  
+- **Risk** → volatility (uncertainty of returns)  
+- **Sharpe Ratio** → return per unit of risk  
+
+How to interpret:
+
+- Higher return = more aggressive strategy  
+- Lower risk = more stable portfolio  
+- Higher Sharpe Ratio = better risk-adjusted performance  
+
+👉 In practice:
+This helps answer:
+*"Am I taking the right amount of risk for the return I'm getting?"*
 """)
 
 st.write(f"Return: {ret:.2%}")
@@ -304,8 +403,29 @@ st.write(f"Risk: {risk:.2%}")
 st.markdown("### 🤖 ML Risk Prediction")
 
 st.info("""
-- Close to diagonal = good predictions  
-- Wide scatter = weak model  
+This model uses machine learning (linear regression) to predict total portfolio returns.
+
+What the chart shows:
+
+- Each point = one observation  
+- X-axis = actual returns  
+- Y-axis = predicted returns  
+
+How to interpret:
+
+- Points close to the diagonal line → accurate predictions  
+- Points far from the line → prediction errors  
+
+Key insights:
+
+- Tight clustering around the line = strong predictive model  
+- Wide scatter = weaker model / more randomness in returns  
+
+👉 Important note:
+Financial markets are inherently noisy, so perfect prediction is not expected.
+
+👉 This answers:
+*"How well can we estimate future performance using historical patterns?"*
 """)
 
 fig_ml, ax = plt.subplots(figsize=(4.5, 2.5))
