@@ -1,152 +1,177 @@
-🏦 Institutional Financial Risk Dashboard
-https://img.shields.io/badge/Python-3.9+-blue
-https://img.shields.io/badge/Streamlit-Live_App-red
-https://img.shields.io/badge/License-MIT-green
+# 🏦 Institutional Financial Risk Dashboard
 
-A full-stack financial risk analytics platform built in Python using Streamlit.
+![Python](https://img.shields.io/badge/Python-3.9+-blue)
+![Streamlit](https://img.shields.io/badge/Streamlit-Live_App-red)
+![License](https://img.shields.io/badge/License-MIT-green)
+
+A full-stack financial risk analytics platform built with Python and Streamlit.
 
 This dashboard simulates how a bank or investment portfolio behaves under stress, helping users understand:
 
-How much money could be lost in extreme scenarios
+- 📉 Potential losses under extreme scenarios  
+- 💧 Liquidity sufficiency  
+- 🏦 Capital adequacy under financial shocks  
 
-Whether the portfolio has enough liquidity
+---
 
-Whether the institution has enough capital to survive shocks
+## 🌐 Live Demo
 
-🌐 Live Demo
-👉 Streamlit App:  
-https://financial-risk-dashboard-sa.streamlit.app/
+👉 https://financial-risk-dashboard-sa.streamlit.app/
 
-Interactive dashboard where you can upload a portfolio, adjust stress scenarios, and instantly see risk metrics and visualizations.
+An interactive dashboard where you can:
+- Upload your own portfolio  
+- Adjust stress scenarios  
+- Instantly visualize risk metrics  
 
-🚀 What This Project Does
-This tool answers three key questions:
+---
 
-1. 📉 “How much could I lose?”
-Using Monte Carlo simulation, the model generates thousands of possible future outcomes and estimates:
+## 🚀 What This Project Does
 
-Value at Risk (VaR) – worst expected loss in normal bad conditions
+This tool answers three critical financial risk questions:
 
-Expected Shortfall (ES) – average loss in extreme scenarios
+---
 
-👉 Think of this as: “What happens if things go really wrong?”
+### 1. 📉 How much could I lose?
 
-2. 💧 “Do I have enough cash?”
-The model calculates:
+Using Monte Carlo simulation, the model generates thousands of possible outcomes:
 
-Liquidity Coverage Ratio (LCR)  
-= liquid assets / stressed cash outflows
+- Value at Risk (VaR): worst expected loss in normal adverse conditions  
+- Expected Shortfall (ES): average loss in extreme scenarios  
 
-👉 LCR > 1 → safe
-👉 LCR < 1 → potential liquidity crisis
+👉 What happens if things go really wrong?
 
-3. 🏦 “Can I survive financially?”
-Using Basel-style capital rules:
+---
 
-CET1 Ratio  
-= capital / risk‑weighted assets
+### 2. 💧 Do I have enough cash?
 
-👉 Higher = safer institution
-👉 Lower = higher risk of failure
+Liquidity Coverage Ratio (LCR):
 
-⚙️ Scenario Analysis
-You can simulate real‑world crises by adjusting:
+LCR = liquid assets / stressed cash outflows
 
-📉 Equity crash
+- LCR > 1 → Safe  
+- LCR < 1 → Potential liquidity risk  
 
-📈 Interest rate shock
+---
 
-⚠️ Credit stress
+### 3. 🏦 Can I survive financially?
 
-💸 Deposit run
+CET1 Ratio:
 
-🧊 Liquidity freeze
+CET1 Ratio = capital / risk-weighted assets
 
-Preset Scenarios
-2008 Financial Crisis – extreme systemic stress
+- Higher → Stronger institution  
+- Lower → Higher risk of failure  
 
-COVID Shock – sharp but shorter disruption
+---
 
-📁 Portfolio Input (Important)
-You can upload your own portfolio using a CSV file.
+## ⚙️ Scenario Analysis
 
-Required Format
-csv
-asset_type,value,PD,LGD,duration
-loan,1000000,0.02,0.4,0
-bond,1200000,0,0,5
-equity,500000,0,0,0
-cash,300000,0,0,0
-Column Explanation
-asset_type → loan, bond, equity, cash
+Simulate real-world financial shocks:
 
-value → monetary value (€)
+- 📉 Equity crash  
+- 📈 Interest rate shock  
+- ⚠️ Credit stress  
+- 💸 Deposit run  
+- 🧊 Liquidity freeze  
 
-PD → probability of default (loans only)
+### Preset Scenarios
 
-LGD → % loss if loan defaults
+- 2008 Financial Crisis – Severe systemic stress  
+- COVID Shock – Sharp, short-term disruption  
 
-duration → bond sensitivity to interest rates
+---
 
-👉 If no file is uploaded, a sample portfolio is used.
+## 📁 Portfolio Input (Important)
 
-📈 Quantitative Models Included
-🔗 Correlation Matrix
-Measures diversification
+Upload your own portfolio as a CSV file.
 
-High correlation → concentrated risk
+### Required Format
 
-Low correlation → diversified portfolio
+asset_type,value,PD,LGD,duration  
+loan,1000000,0.02,0.4,0  
+bond,1200000,0,0,5  
+equity,500000,0,0,0  
+cash,300000,0,0,0  
 
-📊 PCA (Principal Component Analysis)
-Identifies main risk drivers
+### Column Definitions
 
-One dominant factor → systemic risk
+- asset_type → loan, bond, equity, cash  
+- value → monetary value (€)  
+- PD → probability of default (loans only)  
+- LGD → loss given default (%)  
+- duration → bond sensitivity to interest rates  
 
-⚙️ Optimization
-Balances return vs risk
+If no file is uploaded, a sample portfolio is used.
 
-🤖 Machine Learning
-Predicts outcomes
+---
 
-Measures model accuracy
+## 📈 Quantitative Models Included
 
-📉 Visualizations
-Loss distribution
+### Correlation Matrix
+- Measures diversification  
+- High correlation → concentrated risk  
+- Low correlation → diversified portfolio  
 
-Correlation heatmap
+### PCA (Principal Component Analysis)
+- Identifies main risk drivers  
+- One dominant factor → systemic risk  
 
-PCA factor chart
+### Optimization
+- Balances return vs risk  
 
-ML prediction accuracy
+### Machine Learning
+- Predicts outcomes  
+- Evaluates model accuracy  
 
-📊 Use Cases
-Banking dashboards
+---
 
-Portfolio stress testing
+## 📉 Visualizations
 
-Finance education
+- Loss distribution  
+- Correlation heatmap  
+- PCA factor chart  
+- ML prediction accuracy  
 
-Quantitative demonstrations
+---
 
-📂 Project Structure
-Code
+## 📊 Use Cases
+
+- Banking dashboards  
+- Portfolio stress testing  
+- Finance education  
+- Quantitative demonstrations  
+
+---
+
+## 📂 Project Structure
+
 financial-risk-dashboard/
 │
 ├── app.py
 ├── requirements.txt
 ├── README.md
 ├── LICENSE
-⚙️ Run Locally
-bash
-git clone https://github.com/StevenAmet/financial-risk-dashboard.git
-cd financial-risk-dashboard
-pip install -r requirements.txt
-streamlit run app.py
-⚠️ Disclaimer
+
+---
+
+## ⚙️ Run Locally
+
+git clone https://github.com/StevenAmet/financial-risk-dashboard.git  
+cd financial-risk-dashboard  
+pip install -r requirements.txt  
+streamlit run app.py  
+
+---
+
+## ⚠️ Disclaimer
+
 This project is for educational purposes only and does not constitute financial advice.
 
-👤 Author
+---
+
+## 👤 Author
+
 Steven Amet  
+
 GitHub: https://github.com/StevenAmet  
 LinkedIn: https://www.linkedin.com/in/steven-amet/
